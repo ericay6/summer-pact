@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Read(//usr/local/bin/**)",
+      "Read(//Users/ericayliu/**)",
+      "Bash(ls ~/.nvm 2>/dev/null && echo \"nvm dir exists\"; ls /opt/homebrew/bin/ 2>/dev/null | grep -E \"node|npm|fnm|volta\" ; ls ~/.volta/bin 2>/dev/null; ls ~/Library/pnpm 2>/dev/null; find /usr/local /opt -maxdepth 3 -name \"node\" -type f 2>/dev/null | head)",
+      "Bash(brew install *)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(npx next *)",
+      "Bash(pkill -f \"next start -p 3141\")",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(git --version)",
+      "Bash(git init *)",
+      "Bash(git config *)",
+      "Bash(git branch *)",
+      "Bash(git add *)"
+    ]
+  }
+}

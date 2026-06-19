@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "summer-pact",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["next", "start", "-p", "3142"],
+      "port": 3142
+    }
+  ]
+}

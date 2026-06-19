@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --font-display: ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-sand-50 text-ink antialiased;
+    background-image:
+      radial-gradient(1200px 600px at 100% -10%, rgba(255, 158, 122, 0.18), transparent),
+      radial-gradient(900px 500px at -10% 10%, rgba(45, 212, 191, 0.14), transparent);
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-3xl bg-white/90 backdrop-blur border border-sand-200 shadow-card;
+  }
+  .card-pad {
+    @apply p-5 sm:p-6;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold;
+  }
+  .label {
+    @apply block text-sm font-semibold text-ink/80 mb-1.5;
+  }
+  .input {
+    @apply w-full rounded-2xl border border-sand-200 bg-white px-4 py-2.5 text-sm
+      outline-none transition focus:border-sunset-400 focus:ring-2 focus:ring-sunset-200;
+  }
+  .textarea {
+    @apply input min-h-[90px] resize-y;
+  }
+}
+
+/* One-shot confetti fall used by <Confetti /> */
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-10vh) translateX(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) translateX(var(--drift, 0)) rotate(var(--rot, 180deg));
+    opacity: 0;
+  }
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Slim, warm scrollbars */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(247, 122, 62, 0.35);
+  border-radius: 9999px;
+}

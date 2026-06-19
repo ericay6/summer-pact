@@ -1,0 +1,35 @@
+-- ──────────────────────────────────────────────────────────────────────────
+-- Summer Pact — optional demo seed for Supabase.
+--
+-- NOTE: The app already ships with a rich in-browser demo (see
+-- src/lib/demo-data.ts) that runs with NO backend. You only need this if you
+-- want seeded rows in a real Supabase project.
+--
+-- Because rows reference auth.users, create two users first (Auth → Users),
+-- then replace the UUIDs below with their real ids before running.
+-- ──────────────────────────────────────────────────────────────────────────
+
+-- 1. Replace these with real auth user UUIDs:
+--    \set me   '00000000-0000-0000-0000-000000000001'
+--    \set them '00000000-0000-0000-0000-000000000002'
+
+-- Example (uncomment & edit):
+--
+-- insert into public.profiles (id, display_name) values
+--   ('00000000-0000-0000-0000-000000000001', 'You'),
+--   ('00000000-0000-0000-0000-000000000002', 'Riley')
+-- on conflict (id) do nothing;
+--
+-- insert into public.pacts (id, name, invite_code, end_date, created_by) values
+--   ('11111111-1111-1111-1111-111111111111', 'The Summer Arc', 'SUN24Z',
+--    '2026-09-01', '00000000-0000-0000-0000-000000000001');
+--
+-- insert into public.pact_members (pact_id, user_id, role) values
+--   ('11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000001', 'owner'),
+--   ('11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000002', 'member');
+--
+-- insert into public.goals (user_id, pact_id, title, category, why_it_matters,
+--   minimum_success, dream_success, weekly_target, xp_target) values
+--   ('00000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111',
+--    'Finish research paper', 'Research', 'First first-author paper.',
+--    'Touch the doc 15 min', 'Submit a full draft', 4, 400);
