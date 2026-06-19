@@ -306,7 +306,7 @@ export function setDisplayName(name: string) {
     let me = db.profiles.find((p) => p.id === currentUserId(db));
     if (!me) {
       me = {
-        id: LIVE ? currentUserId(db) || uid("user") : DEMO_IDS.ME,
+        id: LIVE ? currentUserId(db) || uid() : DEMO_IDS.ME,
         display_name: trimmed,
         avatar_url: null,
         created_at: new Date().toISOString(),
@@ -338,7 +338,7 @@ export function createPact(name: string, endDate = DEFAULT_SUMMER_END): Pact {
   const db = load();
   const meId = currentUserId(db);
   const pact: Pact = {
-    id: uid("pact"),
+    id: uid(),
     name: name.trim() || "Our Summer Pact",
     invite_code: generateInviteCode(),
     start_date: new Date().toISOString().slice(0, 10),
@@ -347,7 +347,7 @@ export function createPact(name: string, endDate = DEFAULT_SUMMER_END): Pact {
     created_at: new Date().toISOString(),
   };
   const member = {
-    id: uid("m"),
+    id: uid(),
     pact_id: pact.id,
     user_id: meId,
     role: "owner" as const,
@@ -362,7 +362,7 @@ export function createPact(name: string, endDate = DEFAULT_SUMMER_END): Pact {
     const supabase = sb();
     if (supabase) {
       void (async () => {
-        await supabase.from("pacts").insert({
+        const p = await supabase.from("pacts").insert({
           id: pact.id,
           name: pact.name,
           invite_code: pact.invite_code,
@@ -370,11 +370,13 @@ export function createPact(name: string, endDate = DEFAULT_SUMMER_END): Pact {
           end_date: pact.end_date,
           created_by: pact.created_by,
         });
-        await supabase.from("pact_members").insert({
+        if (p.error) console.error("[SummerPact] create pact failed:", p.error);
+        const m = await supabase.from("pact_members").insert({
           pact_id: pact.id,
           user_id: meId,
           role: "owner",
         });
+        if (m.error) console.error("[SummerPact] add owner member failed:", m.error);
         bindRealtime(pact.id);
       })();
     }
@@ -412,7 +414,7 @@ export async function joinPactByCode(
   if (existing.some((m) => m.user_id === meId)) return { ok: true };
   mutate((d) => {
     d.members.push({
-      id: uid("m"),
+      id: uid(),
       pact_id: pact.id,
       user_id: meId,
       role: "member",
@@ -438,7 +440,7 @@ export function addGoal(input: GoalInput): Goal | null {
   const pactId = currentPactId(db);
   if (!pactId) return null;
   const goal: Goal = {
-    id: uid("goal"),
+    id: uid(),
     user_id: currentUserId(db),
     pact_id: pactId,
     is_active: true,
@@ -495,7 +497,7 @@ export function addCheckIn(input: CheckInInput): CheckIn | null {
     hasNextStep: Boolean(input.tomorrow_step && input.tomorrow_step.trim()),
   }).total;
   const checkIn: CheckIn = {
-    id: uid("ci"),
+    id: uid(),
     user_id: currentUserId(db),
     pact_id: pactId,
     created_at: new Date().toISOString(),
@@ -518,7 +520,7 @@ export function addNudge(message: string): Nudge | null {
   const friend = friendProfile(db);
   if (!pactId || !friend) return null;
   const nudge: Nudge = {
-    id: uid("nudge"),
+    id: uid(),
     from_user_id: currentUserId(db),
     to_user_id: friend.id,
     pact_id: pactId,
@@ -568,7 +570,7 @@ export function saveWeeklyReview(
       return;
     }
     record = {
-      id: uid("wr"),
+      id: uid(),
       user_id: meId,
       pact_id: pactId,
       week_start: weekStart,
