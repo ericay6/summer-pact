@@ -3,23 +3,32 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Sparkles, Mail, ArrowRight } from "lucide-react";
+import { Sparkles, ArrowRight, Lock } from "lucide-react";
 import { APP_NAME, APP_SLOGAN } from "@/lib/constants";
 import { Button, buttonVariants } from "@/components/ui/Button";
 import { Input, Label } from "@/components/ui/Field";
 import { Card, CardBody } from "@/components/ui/Card";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { useDB, ensureLiveInit, isLiveMode, currentPactId } from "@/lib/store";
+import {
+  useDB,
+  ensureLiveInit,
+  isLiveMode,
+  currentPactId,
+  refresh,
+} from "@/lib/store";
+
+type Mode = "signin" | "signup";
 
 export default function LoginPage() {
   const router = useRouter();
   const db = useDB();
   const configured = isSupabaseConfigured();
+
+  const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
-    "idle"
-  );
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
   // Live mode: if already signed in, skip the login screen.
@@ -31,22 +40,42 @@ export default function LoginPage() {
     router.replace(currentPactId(db) ? "/dashboard" : "/onboarding");
   }, [db, router]);
 
-  async function sendMagicLink(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     const supabase = createClient();
     if (!supabase) return;
-    setStatus("sending");
-    const redirectTo = `${window.location.origin}/auth/callback`;
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: redirectTo },
-    });
-    if (error) {
-      setErrorMsg(error.message);
-      setStatus("error");
+    setBusy(true);
+    setErrorMsg("");
+
+    if (mode === "signup") {
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) {
+        setErrorMsg(error.message);
+        setBusy(false);
+        return;
+      }
+      if (!data.session) {
+        // Email confirmation is still ON in Supabase.
+        setErrorMsg(
+          "Almost there — turn OFF “Confirm email” in Supabase (Authentication → Providers → Email), then sign up again. For a private 2-person app you don’t need email confirmation."
+        );
+        setBusy(false);
+        return;
+      }
     } else {
-      setStatus("sent");
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) {
+        setErrorMsg(error.message);
+        setBusy(false);
+        return;
+      }
     }
+
+    await refresh();
+    router.replace("/dashboard"); // guards send new users to onboarding
   }
 
   function enterDemo() {
@@ -68,41 +97,82 @@ export default function LoginPage() {
 
         <Card className="animate-pop-in">
           <CardBody>
-            <h1 className="text-xl font-extrabold">Welcome back</h1>
+            <h1 className="text-xl font-extrabold">
+              {mode === "signup" ? "Create your account" : "Welcome back"}
+            </h1>
             <p className="mt-1 text-sm text-ink/55">{APP_SLOGAN}</p>
 
             {configured ? (
-              status === "sent" ? (
-                <div className="mt-6 rounded-2xl bg-lagoon-500/10 p-4 text-sm text-lagoon-600">
-                  📬 Check your inbox — we sent a magic link to{" "}
-                  <strong>{email}</strong>.
+              <>
+                {/* Sign in / Create account toggle */}
+                <div className="mt-5 grid grid-cols-2 gap-1 rounded-2xl bg-sand-100 p-1">
+                  {(["signin", "signup"] as Mode[]).map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => {
+                        setMode(m);
+                        setErrorMsg("");
+                      }}
+                      className={`rounded-xl py-2 text-sm font-semibold transition ${
+                        mode === m
+                          ? "bg-white text-ink shadow-card"
+                          : "text-ink/50"
+                      }`}
+                    >
+                      {m === "signin" ? "Sign in" : "Create account"}
+                    </button>
+                  ))}
                 </div>
-              ) : (
-                <form onSubmit={sendMagicLink} className="mt-6 space-y-4">
+
+                <form onSubmit={submit} className="mt-5 space-y-4">
                   <div>
                     <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
                       type="email"
                       required
+                      autoComplete="email"
                       placeholder="you@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                     />
                   </div>
-                  {status === "error" && (
-                    <p className="text-sm text-berry-500">{errorMsg}</p>
+                  <div>
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      required
+                      minLength={6}
+                      autoComplete={
+                        mode === "signup" ? "new-password" : "current-password"
+                      }
+                      placeholder="At least 6 characters"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
+                  {errorMsg && (
+                    <p className="rounded-xl bg-berry-500/10 p-2.5 text-sm text-berry-500">
+                      {errorMsg}
+                    </p>
                   )}
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={status === "sending"}
-                  >
-                    <Mail className="h-4 w-4" />
-                    {status === "sending" ? "Sending…" : "Send magic link"}
+                  <Button type="submit" className="w-full" disabled={busy}>
+                    <Lock className="h-4 w-4" />
+                    {busy
+                      ? "One sec…"
+                      : mode === "signup"
+                      ? "Create account & start"
+                      : "Sign in"}
                   </Button>
                 </form>
-              )
+
+                <p className="mt-4 text-center text-xs text-ink/45">
+                  {mode === "signin"
+                    ? "New here? Tap “Create account” above."
+                    : "Already have an account? Tap “Sign in” above."}
+                </p>
+              </>
             ) : (
               <div className="mt-6 space-y-4">
                 <div className="rounded-2xl bg-sunset-50 p-4 text-sm text-sunset-700">
@@ -115,13 +185,6 @@ export default function LoginPage() {
                 </Button>
               </div>
             )}
-
-            <div className="mt-6 text-center text-sm text-ink/50">
-              New here?{" "}
-              <Link href="/onboarding" className="font-semibold text-sunset-600">
-                Create your pact
-              </Link>
-            </div>
           </CardBody>
         </Card>
 

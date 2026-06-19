@@ -56,10 +56,16 @@ export default function OnboardingPage() {
     void ensureLiveInit();
   }, []);
 
-  // Returning live user who already has a pact → straight to the dashboard.
+  // Live mode auth + routing guards.
   useEffect(() => {
-    if (!isLiveMode) return;
-    if (db.ready && step === 0 && db.onboarded && currentPactId(db)) {
+    if (!isLiveMode || !db.ready) return;
+    // Not signed in → go log in first.
+    if (!db.authed) {
+      router.replace("/login");
+      return;
+    }
+    // Already in a pact → straight to the dashboard.
+    if (step === 0 && db.onboarded && currentPactId(db)) {
       router.replace("/dashboard");
     }
   }, [db, step, router]);

@@ -267,6 +267,22 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
+-- ─────────────────────────── Role grants ──────────────────────────────────
+-- RLS decides WHICH rows a user sees; these grants let the anon/authenticated
+-- roles access the tables at all. Newer Supabase projects don't always
+-- auto-grant these, which causes "permission denied for table ..." errors.
+grant usage on schema public to anon, authenticated;
+grant select, insert, update, delete on all tables in schema public to authenticated;
+grant select on all tables in schema public to anon;
+grant usage, select on all sequences in schema public to anon, authenticated;
+grant execute on all functions in schema public to anon, authenticated;
+
+-- Keep it working for any tables/functions added later in this script run.
+alter default privileges in schema public
+  grant select, insert, update, delete on tables to authenticated;
+alter default privileges in schema public
+  grant select on tables to anon;
+
 -- ──────────────────────── Storage (proofs) ────────────────────────────────
 -- Create a bucket named 'proofs' (public) in the Storage UI, or:
 insert into storage.buckets (id, name, public)
